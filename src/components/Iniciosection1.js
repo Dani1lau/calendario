@@ -15,7 +15,7 @@ function Iniciosection1() {
   const handleCloseModal = () => {
     setShowCalendar(false); // Cerrar el calendario cuando se presiona "Volver" o se hace clic fuera del modal
   };
-  
+
   return (
     <div>
       <section className="coffee">
