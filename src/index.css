@@ -398,6 +398,24 @@ p{
 }
 }
 
-
+.calendar-container {
+    width: 60%; /* Ajustar tamaño del calendario */
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .fc-day-header {
+    background-color: #ffcc00; /* Color de los encabezados de los días */
+    color: #fff;
+  }
+  
+  .fc-event {
+    color: white;
+    border: none;
+  }
+  
 
 

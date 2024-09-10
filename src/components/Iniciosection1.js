@@ -1,9 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import actividades from "../static/img/actividades.png";
 import asesoria_psicologica from "../static/img/asesoria_psicologica.png";
 import estudio from "../static/img/estudio.png";
+import Calendario from "../components/Calendario.js"; // Importa el componente del calendario
+import "bootstrap/dist/css/bootstrap.min.css";
 
 function Iniciosection1() {
+  const [showCalendar, setShowCalendar] = useState(false); // Controla la visibilidad del calendario
+
+  const handleLoginClick = () => {
+    setShowCalendar(true); // Mostrar el calendario cuando se presiona "Iniciar sesión"
+  };
+
+  const handleCloseModal = () => {
+    setShowCalendar(false); // Cerrar el calendario cuando se presiona "Volver" o se hace clic fuera del modal
+  };
+  
   return (
     <div>
       <section className="coffee">
@@ -61,8 +73,62 @@ function Iniciosection1() {
           </div>
         </div>
       </section>
+
+      {/* Botón para iniciar sesión */}
+      <button onClick={handleLoginClick}>Iniciar sesión</button>
+
+      {showCalendar && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            zIndex: 1000,
+          }}
+          onClick={handleCloseModal} // Cerrar modal al hacer clic fuera
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.2)",
+              minWidth: "80%", // Ajusta el tamaño del modal según lo que necesites
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()} // Evitar que el clic en el modal cierre el modal
+          >
+            {/* Botón para cerrar el modal */}
+            <button
+              onClick={handleCloseModal}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                backgroundColor: "#f00",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                padding: "5px 10px",
+                cursor: "pointer"
+              }}
+            >
+              Volver
+            </button>
+
+            {/* Calendario */}
+            <Calendario />
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default Iniciosection1;
