@@ -96,8 +96,8 @@ function Iniciosection1() {
           <div
             style={{
               backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
+              padding: "20px" ,
+              borderRadius: "8px",    
               boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.2)",
               minWidth: "80%", // Ajusta el tamaño del modal según lo que necesites
               position: "relative",
