@@ -96,10 +96,10 @@ function Iniciosection1() {
           <div
             style={{
               backgroundColor: "white",
-              padding: "20px" ,
               borderRadius: "8px",    
               boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.2)",
-              minWidth: "80%", // Ajusta el tamaño del modal según lo que necesites
+              minWidth: "45%",
+             // Ajusta el tamaño del modal según lo que necesites
               position: "relative",
             }}
             onClick={(e) => e.stopPropagation()} // Evitar que el clic en el modal cierre el modal
@@ -109,14 +109,17 @@ function Iniciosection1() {
               onClick={handleCloseModal}
               style={{
                 position: "absolute",
-                top: "10px",
-                right: "10px",
-                backgroundColor: "#f00",
+                top: "23px",
+                right: "200px",
+                backgroundColor: "#218838",
                 color: "#fff",
                 border: "none",
                 borderRadius: "4px",
-                padding: "5px 10px",
-                cursor: "pointer"
+                padding: "7px 10px",
+                cursor: "pointer",
+                zIndex: "9999",
+                margin: "auto",
+
               }}
             >
               Volver

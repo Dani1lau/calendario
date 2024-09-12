@@ -3,6 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Modal, Button, Form } from 'react-bootstrap';
+import Select from 'react-select'; // Importa react-select
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Calendario = () => {
@@ -14,53 +15,97 @@ const Calendario = () => {
     title: '',
     sede: '',
     descripcion: '',
-    start: '',
-    end: '',
-    jornada: '',
+    date: '',
+    startTime: '',
+    endTime: '',
     taller: '',
     capacitador: '',
     ficha: '',
     allDay: false
   });
 
+  const sedes = [
+    { value: '52', label: 'Sede 52' },
+    { value: '64', label: 'Sede 64' },
+    { value: 'Fontibón', label: 'Fontibón' }
+  ];
+
+  const talleres = [
+    { value: 'taller1', label: 'Taller 1' },
+    { value: 'taller2', label: 'Taller 2' },
+    { value: 'taller3', label: 'Taller 3' }
+  ];
+
+  const capacitadores = [
+    { value: 'capacitador1', label: 'Capacitador 1' },
+    { value: 'capacitador2', label: 'Capacitador 2' },
+    { value: 'capacitador3', label: 'Capacitador 3' }
+  ];
+
+  const fichas = [
+    { value: 'ficha1', label: 'Ficha 1' },
+    { value: 'ficha2', label: 'Ficha 2' },
+    { value: 'ficha3', label: 'Ficha 3' }
+  ];
+
   const handleDateClick = (info) => {
-    setNewEvent({ ...newEvent, start: info.dateStr });
-    setShowModal(true); // abre el modal cuando se hace clic en una fecha
+    setNewEvent({
+      ...newEvent,
+      date: info.dateStr,
+      startTime: '',
+      endTime: ''
+    });
+    setShowModal(true);
   };
 
   const handleEventClick = (info) => {
+    const eventProps = info.event.extendedProps;
     setSelectedEvent(info.event);
     setNewEvent({
-      title: info.event.title,
-      sede: info.event.extendedProps.sede,
-      descripcion: info.event.extendedProps.descripcion,
-      start: info.event.startStr,
-      end: info.event.endStr || '',
-      jornada: info.event.extendedProps.jornada,
-      taller: info.event.extendedProps.taller,
-      capacitador: info.event.extendedProps.capacitador,
-      ficha: info.event.extendedProps.ficha,
-      allDay: info.event.allDay
+      title: info.event.title || '',
+      sede: sedes.find(sede => sede.value === eventProps.sede) || '',
+      descripcion: eventProps.descripcion || '',
+      date: info.event.startStr.split('T')[0] || '',
+      startTime: info.event.startStr.split('T')[1] || '',
+      endTime: info.event.endStr ? info.event.endStr.split('T')[1] || '' : '',
+      taller: talleres.find(taller => taller.value === eventProps.taller) || '',
+      capacitador: capacitadores.find(capacitador => capacitador.value === eventProps.capacitador) || '',
+      ficha: fichas.find(ficha => ficha.value === eventProps.ficha) || '',
+      allDay: info.event.allDay || false
     });
     setIsEditMode(true);
     setShowModal(true);
   };
 
   const handleEventSubmit = () => {
+    const start = `${newEvent.date}T${newEvent.startTime}`;
+    const end = newEvent.endTime ? `${newEvent.date}T${newEvent.endTime}` : null;
+    
     if (isEditMode && selectedEvent) {
       const updatedEvents = events.map(event =>
         event.id === selectedEvent.id
-          ? { ...event, ...newEvent }
+          ? { ...event, ...newEvent, start: start, end: end }
           : event
       );
       setEvents(updatedEvents);
     } else {
-      setEvents([...events, { ...newEvent }]);
+      setEvents([...events, { ...newEvent, start: start, end: end }]);
     }
     setShowModal(false);
     setIsEditMode(false);
     setSelectedEvent(null);
-    setNewEvent({ title: '', sede: '', descripcion: '', start: '', end: '', jornada: '', taller: '', capacitador: '', ficha: '', allDay: false });
+    setNewEvent({
+      title: '',
+      sede: '',
+      descripcion: '',
+      date: '',
+      startTime: '',
+      endTime: '',
+      taller: '',
+      capacitador: '',
+      ficha: '',
+      allDay: false
+    });
   };
 
   const handleInputChange = (e) => {
@@ -68,8 +113,13 @@ const Calendario = () => {
     setNewEvent({ ...newEvent, [name]: value });
   };
 
+  const handleSelectChange = (selectedOption, actionMeta) => {
+    setNewEvent({ ...newEvent, [actionMeta.name]: selectedOption });
+  };
+
   const getEventBackgroundColor = (event) => {
-    switch (event.extendedProps.jornada) {
+    const jornada = event.extendedProps.jornada;
+    switch (jornada) {
       case 'mañana':
         return '#8ED973';
       case 'tarde':
@@ -87,6 +137,7 @@ const Calendario = () => {
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
+          locale='es' // Configura el idioma a español
           events={events.map(event => ({
             ...event,
             backgroundColor: getEventBackgroundColor(event),
@@ -101,96 +152,103 @@ const Calendario = () => {
           }))}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
-          editable={true} // Permite arrastrar eventos
+          editable={true}
         />
       </div>
 
       {/* Modal para agregar/editar eventos */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>{isEditMode ? 'Editar Evento' : 'Agregar Evento'}</Modal.Title>
+          <Modal.Title>{isEditMode ? 'Editar Evento' : 'Agregar Programación'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group controlId="eventTitle">
-              <Form.Label>Título del Evento</Form.Label>
+              <Form.Label>Título de la Programación</Form.Label>
               <Form.Control
                 type="text"
                 name="title"
                 value={newEvent.title}
                 onChange={handleInputChange}
-                placeholder="Ingrese el título del evento"
+                placeholder="Ingrese el título"
               />
             </Form.Group>
             <Form.Group controlId="eventSede">
               <Form.Label>Sede</Form.Label>
-              <Form.Control as="select" name="sede" value={newEvent.sede} onChange={handleInputChange}>
-                <option value="52">Sede 52</option>
-                <option value="63">Sede 63</option>
-                <option value="Fontibón">Fontibón</option>
-              </Form.Control>
+              <Select
+                name="sede"
+                options={sedes}
+                value={newEvent.sede}
+                onChange={handleSelectChange}
+                placeholder="Selecciona la sede"
+              />
             </Form.Group>
             <Form.Group controlId="eventDescripcion">
               <Form.Label>Descripción</Form.Label>
               <Form.Control
-                type="text"
+                as="textarea"
+                rows={3}
                 name="descripcion"
                 value={newEvent.descripcion}
                 onChange={handleInputChange}
                 placeholder="Descripción del evento"
               />
             </Form.Group>
-            <Form.Group controlId="eventStart">
-              <Form.Label>Hora de inicio</Form.Label>
+            <Form.Group controlId="eventDate">
+              <Form.Label>Fecha</Form.Label>
               <Form.Control
-                type="datetime-local"
-                name="start"
-                value={newEvent.start}
+                type="date"
+                name="date"
+                value={newEvent.date}
                 onChange={handleInputChange}
               />
             </Form.Group>
-            <Form.Group controlId="eventEnd">
-              <Form.Label>Hora de finalización</Form.Label>
+            <Form.Group controlId="eventStartTime">
+              <Form.Label>Hora de Inicio</Form.Label>
               <Form.Control
-                type="datetime-local"
-                name="end"
-                value={newEvent.end}
+                type="time"
+                name="startTime"
+                value={newEvent.startTime}
                 onChange={handleInputChange}
               />
             </Form.Group>
-            <Form.Group controlId="eventJornada">
-              <Form.Label>Jornada</Form.Label>
-              <Form.Control as="select" name="jornada" value={newEvent.jornada} onChange={handleInputChange}>
-                <option value="mañana">Mañana</option>
-                <option value="tarde">Tarde</option>
-                <option value="noche">Noche</option>
-              </Form.Control>
+            <Form.Group controlId="eventEndTime">
+              <Form.Label>Hora de Finalización</Form.Label>
+              <Form.Control
+                type="time"
+                name="endTime"
+                value={newEvent.endTime}
+                onChange={handleInputChange}
+              />
             </Form.Group>
             <Form.Group controlId="eventTaller">
               <Form.Label>Taller</Form.Label>
-              <Form.Control
-                type="text"
+              <Select
                 name="taller"
+                options={talleres}
                 value={newEvent.taller}
-                onChange={handleInputChange}
+                onChange={handleSelectChange}
+                placeholder="Selecciona el taller"
               />
             </Form.Group>
             <Form.Group controlId="eventCapacitador">
               <Form.Label>Capacitador</Form.Label>
-              <Form.Control
-                type="text"
+              <Select
                 name="capacitador"
+                options={capacitadores}
                 value={newEvent.capacitador}
-                onChange={handleInputChange}
+                onChange={handleSelectChange}
+                placeholder="Selecciona el capacitador"
               />
             </Form.Group>
             <Form.Group controlId="eventFicha">
               <Form.Label>Ficha</Form.Label>
-              <Form.Control
-                type="text"
+              <Select
                 name="ficha"
+                options={fichas}
                 value={newEvent.ficha}
-                onChange={handleInputChange}
+                onChange={handleSelectChange}
+                placeholder="Selecciona la ficha"
               />
             </Form.Group>
           </Form>

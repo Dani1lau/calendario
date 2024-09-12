@@ -398,8 +398,11 @@ p{
 }
 }
 
+/* Archivo de estilos CSS */
+
+/* Estilo para el contenedor del calendario */
 .calendar-container {
-    width: 60%; /* Ajustar tamaño del calendario */
+    width: 100%; /* Ajustar tamaño del calendario */
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ddd;
@@ -417,5 +420,48 @@ p{
     border: none;
   }
   
+  /* Estilo para el contenedor del modal */
+  .modal-dialog {
+    max-width: 40%; /* Mismo tamaño que el calendario */
+    max-height: 50vh;
+    margin: 0 auto; /* Centrar el modal horizontalmente */
+  }
+  
+  .modal-content {
+    border-radius: 10px; /* Opcional: para que coincida con el calendario */
+  }
+  
 
+/* Cambia el color del botón "Agregar" en el modal a verde */
+.modal-footer .btn-primary {
+    background-color: #28a745; /* Verde Bootstrap */
+    border-color: #28a745;
+  }
+  
+  .modal-footer .btn-primary:hover {
+    background-color: #218838; /* Verde más oscuro */
+    border-color: #1e7e34;
+  }
+  
+/* Aumenta la especificidad para asegurarte de que tus estilos se apliquen */
+.fc-button-primary {
+    background-color: #28a745 !important; /* Verde Bootstrap */
+    border-color: #28a745 !important;
+    color: white !important;
+  }
+  
+  .fc-button-primary:hover {
+    background-color: #218838 !important; /* Verde más oscuro */
+    border-color: #1e7e34 !important;
+  }
+  
 
+  
+  /* Elimina la decoración del texto en los días de la semana y los números */
+  .fc-daygrid-day-number,
+  .fc-daygrid-day-top {
+    text-decoration: none !important;
+    color: rgba(var(--bs-link-color-rgb), var(--bs-link-opacity, 1)) !important;
+  }
+  
+  
