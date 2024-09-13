@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { Modal, Button, Form } from 'react-bootstrap';
-import Select from 'react-select'; // Importa react-select
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useState, useEffect } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { Modal, Button, Form } from "react-bootstrap";
+import Select from "react-select";
+import "bootstrap/dist/css/bootstrap.min.css";
+import {
+  getProgramaciones,
+  createProgramacion,
+  updateProgramacion,
+  deleteProgramacion,
+  getTalleres,
+  getCapacitadores,
+  getFichas,
+} from "../api/api";
 
 const Calendario = () => {
   const [events, setEvents] = useState([]);
@@ -12,49 +21,107 @@ const Calendario = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [newEvent, setNewEvent] = useState({
-    title: '',
-    sede: '',
-    descripcion: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-    taller: '',
-    capacitador: '',
-    ficha: '',
-    allDay: false
+    id: null,
+    sede: null,
+    descripcion: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    taller: null,
+    capacitador: null,
+    ficha: null,
+    allDay: false,
   });
+  const [sede] = useState([
+    { value: "SEDE 52", label: "SEDE 52" },
+    { value: "SEDE 64", label: "SEDE 64" },
+    { value: "SEDE FONTIBON", label: "SEDE FONTIBON" },
+  ]);
+  const [talleres, setTalleres] = useState([]);
+  const [capacitadores, setCapacitadores] = useState([]);
+  const [fichas, setFichas] = useState([]);
 
-  const sedes = [
-    { value: '52', label: 'Sede 52' },
-    { value: '64', label: 'Sede 64' },
-    { value: 'Fontibón', label: 'Fontibón' }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Llamadas a la API para obtener los datos
+        const [talleresData, capacitadoresData, fichasData] = await Promise.all([
+          getTalleres(),
+          getCapacitadores(),
+          getFichas(),
+        ]);
 
-  const talleres = [
-    { value: 'taller1', label: 'Taller 1' },
-    { value: 'taller2', label: 'Taller 2' },
-    { value: 'taller3', label: 'Taller 3' }
-  ];
+        // Verificamos si los datos se están obteniendo correctamente
+        console.log("Talleres data:", talleresData);
+        console.log("Capacitadores data:", capacitadoresData);
+        console.log("Fichas data:", fichasData);
 
-  const capacitadores = [
-    { value: 'capacitador1', label: 'Capacitador 1' },
-    { value: 'capacitador2', label: 'Capacitador 2' },
-    { value: 'capacitador3', label: 'Capacitador 3' }
-  ];
+        // Mapeamos los datos para usarlos en react-select
+        setTalleres(
+          talleresData.map((taller) => ({
+            value: taller.id_Taller,
+            label: taller.nombre_Taller,
+          }))
+        );
 
-  const fichas = [
-    { value: 'ficha1', label: 'Ficha 1' },
-    { value: 'ficha2', label: 'Ficha 2' },
-    { value: 'ficha3', label: 'Ficha 3' }
-  ];
+        setCapacitadores(
+          capacitadoresData.map((capacitador) => ({
+            value: capacitador.id_Capac,
+            label: `${capacitador.nombre_Capac} ${capacitador.apellidos_Capac}`,
+          }))
+        );
+
+        setFichas(
+          fichasData.map((ficha) => ({
+            value: ficha.numero_Ficha,
+            label: ficha.numero_Ficha.toString(),
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      const programaciones = await getProgramaciones();
+      setEvents(
+        programaciones.map((event) => ({
+          id: event.id,
+          start: event.start,
+          end: event.end,
+          extendedProps: {
+            sede: event.sede,
+            descripcion: event.descripcion,
+            taller: event.taller,
+            capacitador: event.capacitador,
+            ficha: event.ficha,
+          },
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading events", error);
+    }
+  };
 
   const handleDateClick = (info) => {
     setNewEvent({
-      ...newEvent,
+      id: null,
+      sede: null,
+      descripcion: "",
       date: info.dateStr,
-      startTime: '',
-      endTime: ''
+      startTime: "",
+      endTime: "",
+      taller: null,
+      capacitador: null,
+      ficha: null,
+      allDay: false,
     });
+    setIsEditMode(false);
     setShowModal(true);
   };
 
@@ -62,50 +129,77 @@ const Calendario = () => {
     const eventProps = info.event.extendedProps;
     setSelectedEvent(info.event);
     setNewEvent({
-      title: info.event.title || '',
-      sede: sedes.find(sede => sede.value === eventProps.sede) || '',
-      descripcion: eventProps.descripcion || '',
-      date: info.event.startStr.split('T')[0] || '',
-      startTime: info.event.startStr.split('T')[1] || '',
-      endTime: info.event.endStr ? info.event.endStr.split('T')[1] || '' : '',
-      taller: talleres.find(taller => taller.value === eventProps.taller) || '',
-      capacitador: capacitadores.find(capacitador => capacitador.value === eventProps.capacitador) || '',
-      ficha: fichas.find(ficha => ficha.value === eventProps.ficha) || '',
-      allDay: info.event.allDay || false
+      id: info.event.id,
+      sede: sede.find((sede) => sede.value === eventProps.sede) || null,
+      descripcion: eventProps.descripcion || "",
+      date: info.event.startStr.split("T")[0] || "",
+      startTime: info.event.startStr.split("T")[1] || "",
+      endTime: info.event.endStr ? info.event.endStr.split("T")[1] : "",
+      taller:
+        talleres.find((taller) => taller.value === eventProps.taller) || null,
+      capacitador:
+        capacitadores.find(
+          (capacitador) => capacitador.value === eventProps.capacitador
+        ) || null,
+      ficha: fichas.find((ficha) => ficha.value === eventProps.ficha) || null,
+      allDay: info.event.allDay || false,
     });
     setIsEditMode(true);
     setShowModal(true);
   };
 
-  const handleEventSubmit = () => {
+  const handleEventSubmit = async () => {
+    if ( !newEvent.date || !newEvent.startTime) {
+      alert(
+        "Por favor complete los campos obligatorios: título, fecha y hora de inicio."
+      );
+      return;
+    }
+
     const start = `${newEvent.date}T${newEvent.startTime}`;
     const end = newEvent.endTime ? `${newEvent.date}T${newEvent.endTime}` : null;
-    
-    if (isEditMode && selectedEvent) {
-      const updatedEvents = events.map(event =>
-        event.id === selectedEvent.id
-          ? { ...event, ...newEvent, start: start, end: end }
-          : event
+
+    const event = {
+      id: newEvent.id || null,
+      start,
+      end,
+      extendedProps: {
+        sede: newEvent.sede ? newEvent.sede.value : "",
+        descripcion: newEvent.descripcion || "",
+        taller: newEvent.taller ? newEvent.taller.value : "",
+        capacitador: newEvent.capacitador ? newEvent.capacitador.value : "",
+        ficha: newEvent.ficha ? newEvent.ficha.value : "",
+      },
+    };
+
+    try {
+      if (isEditMode) {
+        await updateProgramacion(selectedEvent.id, event);
+        setEvents(events.map((e) => (e.id === selectedEvent.id ? event : e)));
+      } else {
+        const newEventResponse = await createProgramacion(event);
+        setEvents([...events, { ...event, id: newEventResponse.id }]);
+      }
+
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error saving event", error);
+      alert(
+        "Error al crear o actualizar la programación. Verifica los campos y vuelve a intentarlo."
       );
-      setEvents(updatedEvents);
-    } else {
-      setEvents([...events, { ...newEvent, start: start, end: end }]);
     }
-    setShowModal(false);
-    setIsEditMode(false);
-    setSelectedEvent(null);
-    setNewEvent({
-      title: '',
-      sede: '',
-      descripcion: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      taller: '',
-      capacitador: '',
-      ficha: '',
-      allDay: false
-    });
+  };
+
+  const handleDeleteEvent = async () => {
+    if (selectedEvent) {
+      try {
+        await deleteProgramacion(selectedEvent.id);
+        setEvents(events.filter((event) => event.id !== selectedEvent.id));
+        setShowModal(false);
+      } catch (error) {
+        console.error("Error deleting event", error);
+      }
+    }
   };
 
   const handleInputChange = (e) => {
@@ -117,67 +211,33 @@ const Calendario = () => {
     setNewEvent({ ...newEvent, [actionMeta.name]: selectedOption });
   };
 
-  const getEventBackgroundColor = (event) => {
-    const jornada = event.extendedProps.jornada;
-    switch (jornada) {
-      case 'mañana':
-        return '#8ED973';
-      case 'tarde':
-        return '#44B3E0';
-      case 'noche':
-        return '#8ED973';
-      default:
-        return '#3788d8';
-    }
-  };
-
   return (
     <>
       <div className="calendar-container">
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          locale='es' // Configura el idioma a español
-          events={events.map(event => ({
-            ...event,
-            backgroundColor: getEventBackgroundColor(event),
-            extendedProps: {
-              sede: event.sede,
-              descripcion: event.descripcion,
-              jornada: event.jornada,
-              taller: event.taller,
-              capacitador: event.capacitador,
-              ficha: event.ficha
-            }
-          }))}
+          locale="es"
+          events={events}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           editable={true}
         />
       </div>
 
-      {/* Modal para agregar/editar eventos */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>{isEditMode ? 'Editar Evento' : 'Agregar Programación'}</Modal.Title>
+          <Modal.Title>
+            {isEditMode ? "Editar Programación" : "Agregar Programación"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="eventTitle">
-              <Form.Label>Título de la Programación</Form.Label>
-              <Form.Control
-                type="text"
-                name="title"
-                value={newEvent.title}
-                onChange={handleInputChange}
-                placeholder="Ingrese el título"
-              />
-            </Form.Group>
             <Form.Group controlId="eventSede">
               <Form.Label>Sede</Form.Label>
               <Select
                 name="sede"
-                options={sedes}
+                options={sede}
                 value={newEvent.sede}
                 onChange={handleSelectChange}
                 placeholder="Selecciona la sede"
@@ -191,7 +251,6 @@ const Calendario = () => {
                 name="descripcion"
                 value={newEvent.descripcion}
                 onChange={handleInputChange}
-                placeholder="Descripción del evento"
               />
             </Form.Group>
             <Form.Group controlId="eventDate">
@@ -213,7 +272,7 @@ const Calendario = () => {
               />
             </Form.Group>
             <Form.Group controlId="eventEndTime">
-              <Form.Label>Hora de Finalización</Form.Label>
+              <Form.Label>Hora de Fin</Form.Label>
               <Form.Control
                 type="time"
                 name="endTime"
@@ -249,16 +308,22 @@ const Calendario = () => {
                 value={newEvent.ficha}
                 onChange={handleSelectChange}
                 placeholder="Selecciona la ficha"
+                isMulti
               />
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
+          {isEditMode && (
+            <Button variant="danger" onClick={handleDeleteEvent}>
+              Eliminar
+            </Button>
+          )}
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancelar
           </Button>
           <Button variant="primary" onClick={handleEventSubmit}>
-            {isEditMode ? 'Guardar Cambios' : 'Agregar Evento'}
+            {isEditMode ? "Guardar Cambios" : "Crear Programación"}
           </Button>
         </Modal.Footer>
       </Modal>
